@@ -3,38 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Futbol JS - Kariyer Simülatörü2</title>
+    <title>Pro Futbol JS - Online P2P Sürüm</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         /* ==============================
            CSS: TASARIM VE ARAYÜZ
            ============================== */
         :root {
-            --bg-color: #111;
-            --field-color: #2e8b57;
-            --blue-team: #4facfe;
-            --red-team: #ff0844;
-            --gold: #ffd700;
-            --purple: #8e44ad;
+            --bg-color: #111; --field-color: #2e8b57;
+            --blue-team: #4facfe; --red-team: #ff0844;
+            --gold: #ffd700; --purple: #8e44ad; --dark-gray: #222;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: #fff;
+            background-color: var(--bg-color); color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            margin: 0; overflow: hidden; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; height: 100vh; user-select: none;
         }
 
         .btn {
-            background: var(--blue-team); color: #fff; border: none; padding: 12px 24px;
+            background: var(--blue-team); color: #fff; border: none; padding: 12px 24px; margin: 5px;
             font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer;
-            transition: all 0.2s ease; text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+            transition: all 0.2s ease; text-transform: uppercase; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
         }
         .btn:hover { background: #3a8ee6; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6); }
         .btn:active { transform: translateY(1px); }
@@ -44,38 +35,35 @@
         .btn-gold:hover { background: #ffbb33; }
         .btn-purple { background: var(--purple); box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4); }
         .btn-purple:hover { background: #9b59b6; }
+        .btn-green { background: #2ecc71; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
+        .btn-green:hover { background: #27ae60; }
+        .btn-small { padding: 8px 15px; font-size: 0.9rem; }
 
-        .page { display: none; flex-direction: column; align-items: center; width: 800px; text-align: center; }
+        .page { display: none; flex-direction: column; align-items: center; width: 850px; text-align: center; }
         .active-page { display: flex; }
 
         /* --- ANASAYFA --- */
-        #mainMenuPage {
-            background: rgba(0,0,0,0.9); padding: 40px; border-radius: 15px;
-            border: 2px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .header {
-            font-size: 3.5rem; font-weight: 900; margin-bottom: 20px;
-            background: linear-gradient(to right, var(--blue-team), var(--red-team));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .career-stats-bar {
-            display: flex; justify-content: space-around; width: 100%; align-items: center;
-            background: #222; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #333;
-        }
-        .stat-box { font-size: 1.2rem; }
-        .stat-label { color: #aaa; font-size: 1rem; margin-right: 5px; }
-        .stat-value { font-weight: bold; }
-        .stat-money { color: var(--gold); }
-        .stat-league { color: #b366ff; }
+        #mainMenuPage { background: rgba(0,0,0,0.9); padding: 40px; border-radius: 15px; border: 2px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .header { font-size: 3.5rem; font-weight: 900; margin-bottom: 20px; background: linear-gradient(to right, var(--blue-team), var(--red-team)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .career-stats-bar { display: flex; justify-content: space-around; width: 100%; align-items: center; background: var(--dark-gray); padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #333; }
+        .stat-box { font-size: 1.2rem; } .stat-label { color: #aaa; font-size: 1rem; margin-right: 5px; }
+        .stat-value { font-weight: bold; } .stat-money { color: var(--gold); }
 
-        .team-profile { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 30px; }
-        #teamNameDisplay { font-size: 2rem; font-weight: bold; }
-        .player-stars { color: var(--gold); font-size: 1.5rem; margin-left: 10px; text-shadow: 0 0 10px var(--gold); }
-        #editTeamNameIcon { cursor: pointer; color: #888; font-size: 1.5rem; margin-left: 10px; }
-        #editTeamNameIcon:hover { color: #fff; }
-
+        .team-profile { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 30px; flex-direction: column;}
+        #teamNameDisplay { font-size: 2.2rem; font-weight: bold; color: var(--blue-team); }
+        .player-stars { color: var(--gold); font-size: 1.5rem; text-shadow: 0 0 10px var(--gold); }
+        #peerIdDisplay { font-size: 1rem; color: #2ecc71; background: #111; padding: 5px 15px; border-radius: 5px; border: 1px solid #2ecc71; margin-top: 10px; user-select: all;}
+        
         .menu-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
-        .menu-actions .btn { font-size: 1.2rem; padding: 15px; }
+
+        /* --- ARKADAŞLAR SAYFASI --- */
+        #friendsPage { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 15px; border: 2px solid var(--blue-team); width: 700px; max-height: 90vh; overflow-y:auto;}
+        .friend-section { background: var(--dark-gray); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: left; border: 1px solid #444; }
+        .friend-section h3 { margin-top: 0; color: var(--gold); border-bottom: 1px solid #444; padding-bottom: 10px;}
+        .friend-list { list-style: none; padding: 0; margin: 0; }
+        .friend-item { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 10px 15px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #333; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-box input { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #111; color: #fff; }
 
         /* --- TURNUVA SAYFASI --- */
         #tournamentPage { background: rgba(0,0,0,0.9); padding: 40px; border-radius: 15px; border: 2px solid var(--gold); width: 600px; }
@@ -87,19 +75,16 @@
         #shopPage { max-height: 95vh; overflow-y: auto; padding: 20px 40px; background: rgba(0,0,0,0.85); border-radius: 15px; border: 2px solid #444; width: 850px; }
         #shopPage::-webkit-scrollbar { width: 10px; } #shopPage::-webkit-scrollbar-thumb { background: var(--blue-team); border-radius: 5px; }
         .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; margin-bottom: 30px; }
-        .shop-item { background: #222; padding: 15px; border-radius: 10px; border: 2px solid #333; display: flex; flex-direction: column; align-items: center; transition: all 0.2s; }
-        .shop-item.purchased { opacity: 0.5; border-color: #555; }
-        .item-ball-icon { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; margin-bottom: 10px; }
-        .ball-cl { background-image: radial-gradient(circle, #fff 10%, #fff 20%, #2e8b57 50%); box-shadow: 0 0 15px var(--gold); }
-        .ball-fire { background-image: radial-gradient(circle, #ffeb3b 10%, #ff9800 40%, #f44336 80%); box-shadow: 0 0 20px #ff5722; }
-        .ball-neon { background-color: #ccff00; box-shadow: 0 0 20px #ccff00; border-color: #ccff00;}
-        .item-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; text-align: center; }
-        .item-desc { color: #aaa; font-size: 0.8rem; margin-bottom: 10px; height: 45px; text-align: center; }
+        .shop-item { background: var(--dark-gray); padding: 15px; border-radius: 10px; border: 2px solid #333; display: flex; flex-direction: column; align-items: center; transition: all 0.2s; text-align: center; }
+        .shop-item.purchased { opacity: 0.6; border-color: #555; }
+        .item-photo { font-size: 3.5rem; margin-bottom: 10px; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
+        .item-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; color: #fff; }
+        .item-desc { color: #aaa; font-size: 0.8rem; margin-bottom: 10px; height: 50px; overflow: hidden; }
         .item-price { color: var(--gold); font-weight: bold; font-size: 1.2rem; margin-bottom: 10px; }
 
         /* --- OYUN ALANI --- */
         #gameCanvasContainer { position: relative; box-shadow: 0 10px 30px rgba(0, 255, 100, 0.2); border: 5px solid #fff; border-radius: 10px; }
-        #gameCanvas { background-color: var(--field-color); }
+        #gameCanvas { background-color: var(--field-color); border-radius: 5px; display: block; }
         .game-ui-overlay { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 5; }
         .game-score { font-size: 2.5rem; font-weight: 900; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
         .team-name-board { font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 3px #000; }
@@ -107,54 +92,107 @@
         #aiScoreBoard { color: var(--red-team); text-align: right; }
         .ai-stars { color: var(--gold); font-size: 1rem; }
         #gameTimer { font-size: 2rem; font-weight: bold; background: rgba(255,255,255,0.9); color: #111; padding: 5px 20px; border-radius: 8px; }
-        #watchModeBadge { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: var(--purple); color: #fff; padding: 5px 15px; border-radius: 20px; font-weight: bold; display: none; }
+        
+        .mode-badge { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); color: #fff; padding: 5px 15px; border-radius: 20px; font-weight: bold; display: none; z-index: 10; }
+        #watchModeBadge { background: var(--purple); }
+        #twoPlayerBadge { background: #ffaa00; color: #111; }
+        #onlineModeBadge { background: #e74c3c; box-shadow: 0 0 10px #e74c3c;}
 
         /* --- MODALLAR --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
-        .modal { background: #222; padding: 40px; border-radius: 15px; border: 2px solid #fff; text-align: center; width: 450px; }
+        .modal { background: var(--dark-gray); padding: 40px; border-radius: 15px; border: 2px solid #fff; text-align: center; width: 450px; }
         .modal h2 { margin-top: 0; font-size: 2.5rem; }
         #matchResultModalText { font-size: 1.3rem; margin-bottom: 30px; color: #ccc;}
-        #editTeamNameInput { width: 90%; padding: 15px; margin-bottom: 20px; background: #111; border: 1px solid #555; color: #fff; border-radius: 8px; font-size: 1.2rem; text-align: center;}
+        .custom-input { width: 90%; padding: 15px; margin-bottom: 20px; background: #111; border: 1px solid #555; color: #fff; border-radius: 8px; font-size: 1.2rem; text-align: center;}
     </style>
 </head>
 <body>
 
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal">
+            <h2 style="color:var(--blue-team);">Hoş Geldin!</h2>
+            <p style="color:#aaa;">Kariyerine başlamak için bir Oyuncu Adı belirle.</p>
+            <input type="text" id="usernameInput" class="custom-input" maxlength="15" placeholder="Örn: Efsane10">
+            <button class="btn btn-gold" onclick="registerUser()">Kariyeri Başlat</button>
+        </div>
+    </div>
+
+    <div id="p2pRequestModal" class="modal-overlay">
+        <div class="modal" style="border-color: var(--blue-team);">
+            <h2 style="color:var(--blue-team);">⚔️ Maç İsteği!</h2>
+            <p id="p2pRequestText" style="font-size: 1.2rem; color: #fff; margin-bottom: 20px;"></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-green" onclick="acceptP2PMatch()">Kabul Et</button>
+                <button class="btn btn-red" onclick="rejectP2PMatch()">Reddet</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="p2pWaitModal" class="modal-overlay">
+        <div class="modal">
+            <h2>⏳ Bekleniyor...</h2>
+            <p style="color:#aaa;">Karşı tarafın isteği kabul etmesi bekleniyor.</p>
+            <button class="btn btn-red" onclick="cancelP2PRequest()">İptal Et</button>
+        </div>
+    </div>
+
     <div id="mainMenuPage" class="page active-page">
         <div class="header">PRO FUTBOL</div>
-        
         <div class="career-stats-bar">
             <div class="stat-box league"><span class="stat-label">Lig:</span><span id="leagueDisplay" class="stat-value">Bronz</span></div>
             <div class="stat-box points"><span class="stat-label">Puan:</span><span id="pointsDisplay" class="stat-value">1000</span></div>
             <div class="stat-box money"><span class="stat-label">Bakiye:</span><span id="moneyDisplay" class="stat-value">0</span> ₺</div>
         </div>
-
         <div class="team-profile">
-            <span id="teamNameDisplay">Takımım</span>
-            <span id="playerMenuStars" class="player-stars">★☆☆☆☆</span>
-            <span id="editTeamNameIcon" title="İsmi Düzenle">✎</span>
+            <div>
+                <span id="teamNameDisplay"></span>
+                <span id="playerMenuStars" class="player-stars">★☆☆☆☆</span>
+            </div>
+            <div id="peerIdDisplay">Bağlanıyor...</div>
         </div>
-
         <div class="menu-actions">
-            <button id="startMatchBtn" class="btn">⚽ Hızlı Maç</button>
-            <button onclick="openTournamentMenu()" class="btn btn-gold">🏆 Kupa Turnuvası</button>
-            <button onclick="startWatchMode()" class="btn btn-purple">📺 Maç İzle</button>
-            <button onclick="showPage('shopPage')" class="btn btn-red">🛒 Mağaza</button>
+            <button onclick="startSinglePlayer()" class="btn">⚽ Hızlı Maç (Bot)</button>
+            <button onclick="startTwoPlayer()" class="btn btn-gold">👥 2 Kişilik (Aynı PC)</button>
+            <button onclick="openTournamentMenu()" class="btn btn-purple">🏆 16 Maçlık Turnuva</button>
+            <button onclick="showPage('friendsPage'); refreshFriendsUI();" class="btn" style="background:#008080;">🌐 Online Oyna (P2P)</button>
+            <button onclick="startWatchMode()" class="btn" style="background:#555;">📺 Maç İzle (Sim)</button>
+            <button onclick="showShop()" class="btn btn-red">🛒 Dev Mağaza (30 Eşya)</button>
         </div>
     </div>
 
-    <div id="tournamentPage" class="page">
-        <h2 style="color: var(--gold); font-size: 2.5rem; margin-top:0;">Şampiyonlar Kupası</h2>
-        <p style="color: #ccc; margin-bottom: 20px;">Art arda 3 maç kazan, büyük ödülü (500 ₺ + 50 Puan) kap! Yenilirsen elenirsin.</p>
+    <div id="friendsPage" class="page">
+        <h2 style="color:var(--blue-team); font-size:2.5rem; margin-top:0;">Online P2P Karşılaşma</h2>
+        <p style="color:#aaa; margin-bottom:20px;">Arkadaşının "Davet Kodunu" girerek ona online maç isteği at!</p>
         
+        <div class="friend-section" style="border-color: #2ecc71;">
+            <h3 style="color: #2ecc71;">⚔️ Maç İsteği Gönder</h3>
+            <div class="search-box">
+                <input type="text" id="friendPeerInput" placeholder="Arkadaşının Davet Kodunu Buraya Yapıştır...">
+                <button class="btn btn-green" style="padding:10px 20px;" onclick="sendMatchRequest()">Meydan Oku!</button>
+            </div>
+            <p id="p2pStatusMsg" style="color:#ffaa00; font-size:0.9rem;"></p>
+        </div>
+
+        <div class="friend-section">
+            <h3>🤝 Kayıtlı Rakipler</h3>
+            <p style="font-size:0.8rem; color:#888;">Daha önce eklediğin kodlar burada görünür.</p>
+            <ul class="friend-list" id="savedFriendsList"></ul>
+        </div>
+        
+        <button class="btn btn-red" onclick="showPage('mainMenuPage')">Ana Menüye Dön</button>
+    </div>
+
+    <div id="tournamentPage" class="page">
+        <h2 style="color: var(--gold); font-size: 2.5rem; margin-top:0;">16 Maçlık Şampiyona</h2>
+        <p style="color: #ccc; margin-bottom: 20px;">16 farklı takımı yen. Kaybedersen en başa dönersin!</p>
         <div class="tournament-bracket">
-            <div class="bracket-stage" id="tourneyStageName">Çeyrek Final</div>
+            <div class="bracket-stage" id="tourneyStageName">1. Maç</div>
             <div class="bracket-match">
                 <span id="tourneyPlayerName" style="color: var(--blue-team); font-weight: bold;">Sen</span> 
                 <span style="color: #888; margin: 0 10px;">VS</span> 
                 <span id="tourneyOpponentName" style="color: var(--red-team); font-weight: bold;">Rakip</span>
             </div>
         </div>
-        
         <div style="display: flex; gap: 15px; justify-content: center;">
             <button onclick="startTournamentMatch()" class="btn btn-gold" style="padding: 15px 40px; font-size: 1.2rem;">Maça Çık!</button>
             <button onclick="showPage('mainMenuPage')" class="btn btn-red" style="padding: 15px 40px; font-size: 1.2rem;">Geri Dön</button>
@@ -167,45 +205,7 @@
             <div class="stat-box money"><span class="stat-label">Bakiye:</span><span id="moneyDisplayShop" class="stat-value">0</span> ₺</div>
             <button class="btn btn-red" onclick="showPage('mainMenuPage')">Geri Dön</button>
         </div>
-        
-        <div class="shop-grid">
-            <div class="shop-item" id="item_cl_ball">
-                <div class="item-ball-icon ball-cl"></div><div class="item-name">Şampiyonlar Topu</div>
-                <div class="item-price">60 ₺</div>
-                <button id="buy_cl_ball" class="btn btn-red" onclick="buyItem('cl_ball', 60)">Satın Al</button>
-                <button id="equip_cl_ball" class="btn" style="display:none;" onclick="equipItem('cl_ball')">Kullan</button>
-            </div>
-            <div class="shop-item" id="item_fire_ball">
-                <div class="item-ball-icon ball-fire"></div><div class="item-name">Alev Topu</div>
-                <div class="item-price">100 ₺</div>
-                <button id="buy_fire_ball" class="btn btn-red" onclick="buyItem('fire_ball', 100)">Satın Al</button>
-                <button id="equip_fire_ball" class="btn" style="display:none;" onclick="equipItem('fire_ball')">Kullan</button>
-            </div>
-            <div class="shop-item" id="item_neon_ball">
-                <div class="item-ball-icon ball-neon"></div><div class="item-name">Neon Top</div>
-                <div class="item-price">150 ₺</div>
-                <button id="buy_neon_ball" class="btn btn-red" onclick="buyItem('neon_ball', 150)">Satın Al</button>
-                <button id="equip_neon_ball" class="btn" style="display:none;" onclick="equipItem('neon_ball')">Kullan</button>
-            </div>
-            <div class="shop-item" id="item_kickoff_master">
-                <div style="font-size: 2rem; margin-bottom: 10px;">⚡</div><div class="item-name">Santra Ustası</div>
-                <div class="item-desc">Maça 1-0 önde başla.</div><div class="item-price">300 ₺</div>
-                <button id="buy_kickoff_master" class="btn btn-red" onclick="buyItem('kickoff_master', 300)">Satın Al</button>
-                <button id="equip_kickoff_master" class="btn" style="display:none;" disabled>Aktif</button>
-            </div>
-            <div class="shop-item" id="item_captain_band">
-                <div style="font-size: 2rem; margin-bottom: 10px;">🛡️</div><div class="item-name">Kaptanlık Pazubendi</div>
-                <div class="item-desc">Yenilgide puan düşmez.</div><div class="item-price">320 ₺</div>
-                <button id="buy_captain_band" class="btn btn-red" onclick="buyItem('captain_band', 320)">Satın Al</button>
-                <button id="equip_captain_band" class="btn" style="display:none;" disabled>Aktif</button>
-            </div>
-            <div class="shop-item" id="item_speed_boots">
-                <div style="font-size: 2rem; margin-bottom: 10px;">👟</div><div class="item-name">Çevik Krampon</div>
-                <div class="item-desc">Raket hızını artırır.</div><div class="item-price">180 ₺</div>
-                <button id="buy_speed_boots" class="btn btn-red" onclick="buyItem('speed_boots', 180)">Satın Al</button>
-                <button id="equip_speed_boots" class="btn" style="display:none;" disabled>Aktif</button>
-            </div>
-        </div>
+        <div class="shop-grid" id="shopGrid"></div>
     </div>
 
     <div id="gamePage" class="page">
@@ -213,20 +213,20 @@
             <canvas id="gameCanvas" width="800" height="500"></canvas>
             <div class="game-ui-overlay">
                 <div class="game-score">
-                    <div class="team-name-board" id="playerTeamNameBoard">Takımım <span class="ai-stars" id="playerGameStars">★</span></div>
+                    <div class="team-name-board" id="playerTeamNameBoard">P1 <span class="ai-stars" id="playerGameStars">★</span></div>
                     <div id="playerScoreBoard">0</div>
                 </div>
                 <div id="gameTimer">2:00</div>
                 <div class="game-score">
-                    <div class="team-name-board" id="aiTeamNameBoard">Rakip <span class="ai-stars" id="aiStarsBoard">★★★</span></div>
+                    <div class="team-name-board" id="aiTeamNameBoard">P2 <span class="ai-stars" id="aiStarsBoard">★★★</span></div>
                     <div id="aiScoreBoard">0</div>
                 </div>
             </div>
-            <div id="watchModeBadge">📺 CANLI YAYIN - İZLEYİCİ MODU</div>
+            <div id="watchModeBadge" class="mode-badge">📺 CANLI YAYIN - İZLEYİCİ MODU</div>
+            <div id="twoPlayerBadge" class="mode-badge">👥 2 KİŞİLİK MOD (Sol: W/S | Sağ: Ok Tuşları)</div>
+            <div id="onlineModeBadge" class="mode-badge">🌐 ONLINE P2P (Kontrol: W/S)</div>
         </div>
-        <p id="gameControlsText" style="color: #888; margin-top: 15px;">Kontroller: Yukarı/Aşağı gitmek için W/S veya Ok Tuşları</p>
-        <button id="quitMatchBtn" class="btn btn-red" style="margin-top: 10px; display: none;" onclick="quitWatchMode()">Maçtan Çık</button>
-    </div>
+        </div>
 
     <div id="matchEndModal" class="modal-overlay">
         <div class="modal">
@@ -236,385 +236,644 @@
         </div>
     </div>
 
-    <div id="editTeamNameModal" class="modal-overlay">
-        <div class="modal">
-            <h2>Takım İsmi</h2>
-            <input type="text" id="editTeamNameInput" maxlength="15" placeholder="Örn: Galatasaray">
-            <br>
-            <button class="btn" onclick="saveTeamName()">Kaydet</button>
-        </div>
-    </div>
-
     <script>
         const pages = document.querySelectorAll('.page');
-        const canvas = document.getElementById("gameCanvas");
+        const canvas = document.getElementById("gameCanvas"); 
         const ctx = canvas.getContext("2d");
 
-        const allTeams = [
-            { name: "Amatör İdmanyurdu", stars: 1 }, { name: "Sokak Efsaneleri", stars: 1 },
-            { name: "Bronz GSK", stars: 2 }, { name: "Anadolu Yıldızı", stars: 2 },
-            { name: "Trabzonspor", stars: 3 }, { name: "Başakşehir FK", stars: 3 }, { name: "Adana Demirspor", stars: 3 },
-            { name: "Galatasaray", stars: 4 }, { name: "Fenerbahçe", stars: 4 }, { name: "Beşiktaş", stars: 4 },
-            { name: "Real Madrid", stars: 5 }, { name: "Manchester City", stars: 5 }, { name: "Bayern Panzer", stars: 5 }
-            { name: "Lahmacun Spor", stars: 4 }, { name: "Köfte Spor", stars: 3 }, { name: "Elmas Real Madrid", stars: 5 }
-            { name: "Unreal Madrid", stars: 5 }, { name: "Capybara Rocks", stars: 2 }, { name: "Easy Ball", stars: 5 }
-            { name: "ParrotX2", stars: 4 }, { name: "Flame Cannons", stars: 5 }, { name: "Mr. Fox", stars: 3 }
-            { name: "The Undead", stars: 4 }, { name: "Flamechanger", stars: 4 }, { name: "Bugün Pazar", stars: 5 }
+        // ==========================================
+        // 1. TAKIMLAR
+        // ==========================================
+        const allTeams = [];
+        const baseTeams = [
+            {n:"Sokak Efsaneleri", s:1}, {n:"Mahalle Gençlik", s:1}, {n:"Amatör İdmanyurdu", s:1}, {n:"Çamlık Gücü", s:1},
+            {n:"Sanayi Spor", s:1}, {n:"Demirayaklar FK", s:1}, {n:"Beton Çimenler", s:1}, {n:"Çayır Çimen SK", s:1},
+            {n:"Tozlu Kramponlar", s:1}, {n:"Yeni Yetmeler", s:1}, {n:"Kale Arkası FC", s:1}, {n:"Altınordu Gençlik", s:1},
+            {n:"Topsuz Oynayanlar", s:1}, {n:"Rüzgarlı Tepe", s:1}, {n:"Kırık Düdükler", s:1}, {n:"Ağır Çekim SK", s:1},
+            {n:"Kırmızı Kartlar", s:1}, {n:"Ofsayt İdman", s:1}, {n:"Yedek Kulübesi", s:1}, {n:"Kramponsuzlar", s:1},
+            {n:"Varoşlar Gücü", s:1}, {n:"Kale Direği SK", s:1}, {n:"Pas Hataları", s:1}, {n:"Acemiler Birliği", s:1},
+            {n:"Bronz GSK", s:2}, {n:"Anadolu Yıldızı", s:2}, {n:"Trabzonspor", s:4}, {n:"Başakşehir FK", s:4},
+            {n:"Adana Demirspor", s:4}, {n:"Galatasaray", s:5}, {n:"Fenerbahçe", s:5}, {n:"Beşiktaş", s:5},
+            {n:"Real Madrid", s:5}, {n:"Manchester City", s:5}, {n:"Bayern Panzer", s:5}, {n:"Paris Yıldızları", s:5}, {n:"Ajax", s:5}
         ];
-
-        let playerData = {
-            teamName: "Kırmızı Şimşekler", money: 0, points: 1000,
-            activeBall: 'default', purchasedItems: [], tournamentStage: 0
-        };
-
-        let isGameRunning = false; let timeLeft = 120; let gameInterval, timerInterval;
-        let playerScore = 0; let aiScore = 0; let currentAiStars = 1;
-        let isTournamentMatch = false; let isWatchMode = false;
-        let watchModeLeftAiStars = 1;
-
-        const ball = { x: 400, y: 250, radius: 12, speed: 7, velocityX: 5, velocityY: 5, type: 'default' };
-        const player = { x: 20, y: 200, width: 15, height: 100, color: "#4facfe", speed: 8 };
-        const ai = { x: 765, y: 200, width: 15, height: 100, color: "#ff0844", speed: 6.5, difficultyFactor: 1, errorFactor: 0.1 };
-
-        let upPressed = false; let downPressed = false;
-        window.addEventListener("keydown", (e) => {
-            if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") upPressed = true;
-            else if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") downPressed = true;
-        });
-        window.addEventListener("keyup", (e) => {
-            if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") upPressed = false;
-            else if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") downPressed = false;
-        });
-
-        function getPlayerStars() {
-            let p = playerData.points;
-            if(p < 1050) return 1; if(p < 1250) return 2;
-            if(p < 1500) return 3; if(p < 2000) return 4; return 5;
+        baseTeams.forEach(t => allTeams.push({name: t.n, stars: t.s}));
+        const cities = ["İzmir", "Bursa", "Antalya", "Konya", "Samsun", "Sivas", "Erzurum", "Diyarbakır", "Malatya", "Kayseri"];
+        const suffixes = ["Şimşekleri", "Fırtınası", "Belediye", "Kartalları", "FC", "Karması"];
+        let cIdx = 0, sIdx = 0;
+        while(allTeams.length < 150) {
+            let stars = allTeams.length < 60 ? 2 : (allTeams.length < 100 ? 3 : 4);
+            allTeams.push({ name: `${cities[cIdx]} ${suffixes[sIdx]}`, stars: stars });
+            sIdx++; if(sIdx >= suffixes.length) { sIdx = 0; cIdx++; } if(cIdx >= cities.length) cIdx = 0;
         }
 
-        function showPage(pageId) {
-            pages.forEach(p => p.classList.remove('active-page'));
-            document.getElementById(pageId).classList.add('active-page');
+        // ==========================================
+        // 2. 30 ADET BENZERSİZ EŞYA
+        // ==========================================
+        const allItems = [
+            {id:"ball_1", type:"ball", name:"Deri Top", photo:"⚽", desc:"Standart maç topu.", price:0, speed:7, effect:"none"},
+            {id:"ball_2", type:"ball", name:"Alev Topu", photo:"🔥", desc:"Hızlanınca alev kuyruğu bırakır!", price:200, speed:8, effect:"fire"},
+            {id:"ball_3", type:"ball", name:"Buz Topu", photo:"🧊", desc:"Rakibi dondurup %30 yavaşlatır.", price:300, speed:7, effect:"ice"},
+            {id:"ball_4", type:"ball", name:"Kaya Top", photo:"🪨", desc:"Ağır ve çok yavaştır.", price:150, speed:5, effect:"rock"},
+            {id:"ball_5", type:"ball", name:"Rüzgar Topu", photo:"🌪️", desc:"Rüzgar gibi aşırı hızlıdır.", price:400, speed:11, effect:"wind"},
+            {id:"ball_6", type:"ball", name:"Altın Top", photo:"💰", desc:"Maç sonu geliri x2 katına çıkarır.", price:600, speed:7, effect:"gold"},
+            {id:"ball_7", type:"ball", name:"Hayalet Top", photo:"👻", desc:"Rakibi şaşırtır, takibi zordur.", price:500, speed:8, effect:"ghost"},
+            {id:"ball_8", type:"ball", name:"Şimşek Topu", photo:"⚡", desc:"Fırtına hızında ani tepkiler verir.", price:700, speed:12, effect:"lightning"},
+            {id:"ball_9", type:"ball", name:"Zehir Topu", photo:"🧪", desc:"Rakibin hata yapma oranını artırır.", price:450, speed:7, effect:"poison"},
+            {id:"ball_10", type:"ball", name:"Büyülü Top", photo:"✨", desc:"Seni maça otomatik 1-0 önde başlatır.", price:1000, speed:7, effect:"magic"},
+            {id:"eq_1", type:"equip", name:"Çevik Krampon", photo:"👟", desc:"Raket hızını ciddi şekilde artırır.", price:200, effect:"p_speed", val:3},
+            {id:"eq_2", type:"equip", name:"Dev Eldiven", photo:"🧤", desc:"Raketini kalenin yarısı kadar büyütür.", price:300, effect:"p_size", val:30},
+            {id:"eq_3", type:"equip", name:"Sihirli İçecek", photo:"🥤", desc:"Sana aşırı bir hız patlaması yaşatır.", price:400, effect:"p_speed", val:5},
+            {id:"eq_4", type:"equip", name:"Kaptan Pazubendi", photo:"💪", desc:"Yenilsen bile lig puanın asla düşmez.", price:500, effect:"protect", val:1},
+            {id:"eq_5", type:"equip", name:"Taktik Tahtası", photo:"📋", desc:"Rakibi şaşırtıp yanlış yere koşturur.", price:450, effect:"ai_err", val:0.3},
+            {id:"eq_6", type:"equip", name:"Şanslı Maskot", photo:"🦅", desc:"Maç sonu kazanılan puanı katlar.", price:600, effect:"pts_m", val:1.5},
+            {id:"eq_7", type:"equip", name:"Altın Forma", photo:"👕", desc:"Maç sonu gelirini x1.5 yapar.", price:500, effect:"money_m", val:1.5},
+            {id:"eq_8", type:"equip", name:"Gürültülü Davul", photo:"🥁", desc:"Rakip AI'ın reflekslerini çok yavaşlatır.", price:350, effect:"ai_slow", val:0.6},
+            {id:"eq_9", type:"equip", name:"Hakem Düdüğü", photo:"🌬️", desc:"Rakibin topu kaçırma ihtimalini artırır.", price:550, effect:"ai_err", val:0.5},
+            {id:"eq_10", type:"equip", name:"Şampiyon Madalyası", photo:"🏅", desc:"Gelirlerini tamamen x2 katına çıkarır.", price:1000, effect:"money_m", val:2},
+            {id:"eq_11", type:"equip", name:"Roket Motoru", photo:"🚀", desc:"Seni durdurulamaz ve efsanevi bir hıza ulaştırır.", price:800, effect:"p_speed", val:8},
+            {id:"eq_12", type:"equip", name:"Kale Duvarı", photo:"🧱", desc:"Raketin devasa bir kaleye dönüşür.", price:900, effect:"p_size", val:70},
+            {id:"eq_13", type:"equip", name:"Sponsor Anlaşması", photo:"📜", desc:"Gelirlerini x3 katlar, çok zengin olursun.", price:1500, effect:"money_m", val:3},
+            {id:"eq_14", type:"equip", name:"Efsanevi Antrenör", photo:"👨‍💼", desc:"Kazanılan lig puanlarını x2 yapar.", price:1200, effect:"pts_m", val:2},
+            {id:"eq_15", type:"equip", name:"Sis Bombası", photo:"💨", desc:"Rakip tamamen kör olur ve topu tutamaz.", price:700, effect:"ai_err", val:0.7},
+            {id:"eq_16", type:"equip", name:"Lazer Gözlük", photo:"👓", desc:"Puanını ve Paranı maç sonu ekstra artırır.", price:1300, effect:"combo", val:1},
+            {id:"eq_17", type:"equip", name:"Çelik Tozluk", photo:"🧦", desc:"Raketin biraz daha kalın ve dayanıklı olur.", price:250, effect:"p_size", val:20},
+            {id:"eq_18", type:"equip", name:"Enerji Barı", photo:"🍫", desc:"Hızına ufak ama etkili bir destek verir.", price:150, effect:"p_speed", val:2},
+            {id:"eq_19", type:"equip", name:"Görünmezlik Pelerini", photo:"🧥", desc:"Rakibi aşırı şaşırtmada uzmandır.", price:850, effect:"ai_err", val:0.6},
+            {id:"eq_20", type:"equip", name:"Mega Kalkan", photo:"🛡️", desc:"Yenilgi Koruması + Ekstra Raket Büyüklüğü.", price:2000, effect:"protect_size", val:1}
+        ];
+
+        // ==========================================
+        // 3. KAYIT VE LOKAL VERİ
+        // ==========================================
+        let currentUsername = "";
+        let playerData = { money: 500, points: 1000, activeBall: 'ball_1', activeEquip: null, purchasedItems: ['ball_1'], savedPeers: [], tournamentStage: 0 };
+
+        function loadData() {
+            let data = localStorage.getItem("proFutbol_SaveData");
+            if(data) {
+                let parsed = JSON.parse(data);
+                playerData = {...playerData, ...parsed};
+                currentUsername = localStorage.getItem("proFutbol_Username");
+                if(!playerData.savedPeers) playerData.savedPeers = [];
+            }
+        }
+        function saveData() {
+            localStorage.setItem("proFutbol_SaveData", JSON.stringify(playerData));
+            if(currentUsername) localStorage.setItem("proFutbol_Username", currentUsername);
+        }
+
+        // ==========================================
+        // 4. PEERJS İLE GERÇEK ZAMANLI P2P SİSTEMİ
+        // ==========================================
+        let peer = null;
+        let myPeerId = null;
+        let p2pConnection = null;
+        let isOnlineMatch = false;
+        let isHost = false; 
+        let opponentNameStr = "Rakip";
+
+        function initSystem() {
+            loadData();
+            if(currentUsername) {
+                initPeerJS();
+                buildShopDOM();
+                updateCareerUI();
+            } else {
+                document.getElementById("registerModal").style.display = "flex";
+            }
+        }
+
+        function registerUser() {
+            let input = document.getElementById("usernameInput").value.trim();
+            if(input.length < 3) return alert("Kullanıcı adı en az 3 harf olmalı!");
+            currentUsername = input;
+            saveData();
+            document.getElementById("registerModal").style.display = "none";
+            initPeerJS();
+            buildShopDOM();
             updateCareerUI();
         }
 
-        function saveGame() { localStorage.setItem("proFutbolSave", JSON.stringify(playerData)); }
-        function loadGame() {
-            const saved = localStorage.getItem("proFutbolSave");
-            if (saved) { 
-                playerData = JSON.parse(saved); 
-                if(!playerData.purchasedItems) playerData.purchasedItems = [];
-                if(playerData.tournamentStage === undefined) playerData.tournamentStage = 0;
-                updateCareerUI(); 
-            } else { showEditTeamNameModal(true); }
+        function initPeerJS() {
+            // Rastgele karışık bir ID yerine, kullanıcı adına benzeyen ama benzersiz bir ID oluşturmayı deneyelim
+            let randomNum = Math.floor(Math.random() * 9000) + 1000;
+            let cleanName = currentUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            let desiredId = `${cleanName}-${randomNum}`;
+
+            peer = new Peer(desiredId);
+
+            peer.on('open', function(id) {
+                myPeerId = id;
+                document.getElementById("peerIdDisplay").innerHTML = `Davet Kodun: <b style="color:#fff;">${id}</b>`;
+            });
+
+            peer.on('connection', function(conn) {
+                // Biri bize bağlandı (İstek attı)
+                conn.on('data', function(data) {
+                    if(data.type === 'match_request') {
+                        p2pConnection = conn;
+                        opponentNameStr = data.name;
+                        document.getElementById("p2pRequestText").innerText = `${data.name} seni online maça davet ediyor!`;
+                        document.getElementById("p2pRequestModal").style.display = "flex";
+                    }
+                    else if(data.type === 'match_reject') {
+                        alert("Rakip maçı reddetti.");
+                        cancelP2PRequest();
+                    }
+                    else if(data.type === 'match_accept') {
+                        document.getElementById("p2pWaitModal").style.display = "none";
+                        startOnlineMatch(true); // İsteği biz attık, kabul edildi -> BİZ HOST'UZ
+                    }
+                    else if(data.type === 'game_state' && isOnlineMatch && !isHost) {
+                        // Hosttan gelen oyun verileri
+                        ball.x = data.bx; ball.y = data.by;
+                        p1.y = data.p1y; score1 = data.s1; score2 = data.s2;
+                        timeLeft = data.t;
+                        document.getElementById("gameTimer").innerText = data.tStr;
+                        document.getElementById("playerScoreBoard").innerText = score1;
+                        document.getElementById("aiScoreBoard").innerText = score2;
+                        if(data.gameEnded) { finishMatchOnlineHostEnded(data.s1, data.s2); }
+                    }
+                    else if(data.type === 'client_input' && isOnlineMatch && isHost) {
+                        // Clienttan (Rakip) gelen raket hareketi
+                        p2.y = data.p2y;
+                    }
+                    else if(data.type === 'player_quit') {
+                        alert("Rakip oyundan çıktı/bağlantısı koptu!");
+                        forceQuitMatch();
+                    }
+                });
+            });
+
+            peer.on('error', function(err) {
+                document.getElementById("p2pStatusMsg").innerText = "Bağlantı hatası: " + err.type;
+                cancelP2PRequest();
+            });
         }
 
-        function getLeagueName(points) {
-            if(points < 900) return "Amatör Küme"; if(points < 1050) return "Bronz Lig";
-            if(points < 1250) return "Gümüş Lig"; if(points < 1500) return "Altın Lig";
-            if(points < 2000) return "Elmas Lig"; return "Şampiyonlar Ligi";
+        // Maç İsteği Gönderme
+        function sendMatchRequest() {
+            let targetId = document.getElementById("friendPeerInput").value.trim();
+            if(!targetId) return;
+            if(targetId === myPeerId) return alert("Kendine istek atamazsın!");
+
+            document.getElementById("p2pStatusMsg").innerText = "Bağlanıyor...";
+            p2pConnection = peer.connect(targetId);
+            
+            p2pConnection.on('open', function() {
+                p2pConnection.send({ type: 'match_request', name: currentUsername });
+                document.getElementById("p2pStatusMsg").innerText = "";
+                document.getElementById("p2pWaitModal").style.display = "flex";
+                
+                // Arkadaş listesine ekle
+                if(!playerData.savedPeers.includes(targetId)) {
+                    playerData.savedPeers.push(targetId);
+                    saveData(); refreshFriendsUI();
+                }
+            });
+
+            // Gelen cevapları dinleme yukarıdaki genel peer.on('connection') içinde yapılıyor 
+            // ama aktif bağlandığımız obje üzerinden de dinlemeliyiz:
+            p2pConnection.on('data', function(data) {
+                if(data.type === 'match_accept') {
+                    document.getElementById("p2pWaitModal").style.display = "none";
+                    opponentNameStr = "Rakip (" + targetId.split('-')[0] + ")";
+                    startOnlineMatch(true); // Host
+                } else if(data.type === 'match_reject') {
+                    alert("Maç isteği reddedildi.");
+                    cancelP2PRequest();
+                } else if(data.type === 'client_input' && isOnlineMatch && isHost) {
+                    p2.y = data.p2y; // Client'ın raketini güncelle
+                } else if(data.type === 'game_state' && isOnlineMatch && !isHost) {
+                    // Bu blokta client çalışmaz ama güvenlik için kalsın
+                }
+            });
+        }
+
+        function acceptP2PMatch() {
+            document.getElementById("p2pRequestModal").style.display = "none";
+            p2pConnection.send({ type: 'match_accept' });
+            startOnlineMatch(false); // İsteği kabul eden her zaman CLIENT'tır.
+        }
+
+        function rejectP2PMatch() {
+            document.getElementById("p2pRequestModal").style.display = "none";
+            if(p2pConnection) p2pConnection.send({ type: 'match_reject' });
+            p2pConnection = null;
+        }
+
+        function cancelP2PRequest() {
+            document.getElementById("p2pWaitModal").style.display = "none";
+            p2pConnection = null;
+        }
+
+        function refreshFriendsUI() {
+            let list = document.getElementById("savedFriendsList");
+            list.innerHTML = "";
+            if(playerData.savedPeers.length === 0) {
+                list.innerHTML = "<li style='color:#666;'>Henüz kaydedilmiş bir rakip yok.</li>";
+                return;
+            }
+            playerData.savedPeers.forEach(id => {
+                list.innerHTML += `
+                    <div class="friend-item">
+                        <span>👤 KOD: <b>${id}</b></span>
+                        <button class="btn btn-small" onclick="document.getElementById('friendPeerInput').value='${id}'; sendMatchRequest();">Maça Davet Et</button>
+                    </div>`;
+            });
+        }
+
+
+        // ==========================================
+        // OYUN MOTORU VE DEĞİŞKENLERİ
+        // ==========================================
+        let isGameRunning = false; let timeLeft = 120; let timerInterval; let gameAnimationId; 
+        let score1 = 0; let score2 = 0; let currentAiStars = 1;
+        let isTournamentMatch = false; let isWatchMode = false; let isTwoPlayer = false;
+        let watchModeLeftStars = 1; let ballTrail = []; 
+
+        const ball = { x: 400, y: 250, r: 12, speed: 7, vx: 5, vy: 5, effect: 'none' };
+        const p1 = { x: 20, y: 200, w: 15, h: 100, color: "#4facfe", speed: 8 };
+        const p2 = { x: 765, y: 200, w: 15, h: 100, color: "#ff0844", speed: 6.5, err: 0.1, diff: 1 };
+        let activeMods = { moneyM: 1, ptsM: 1, protect: false };
+
+        let keys = {};
+        window.addEventListener("keydown", (e) => keys[e.key] = true);
+        window.addEventListener("keyup", (e) => keys[e.key] = false);
+
+        function getLeagueName(pts) { if(pts<900) return "Amatör Küme"; if(pts<1050) return "Bronz Lig"; if(pts<1250) return "Gümüş Lig"; if(pts<1500) return "Altın Lig"; if(pts<2000) return "Elmas Lig"; return "Şampiyonlar Ligi"; }
+        function getPlayerStars(pts) { if(pts<1050) return 1; if(pts<1250) return 2; if(pts<1500) return 3; if(pts<2000) return 4; return 5; }
+
+        let isShopBuilt = false;
+        function buildShopDOM() {
+            if(isShopBuilt) return;
+            const grid = document.getElementById("shopGrid"); let html = "";
+            allItems.forEach(item => {
+                html += `
+                <div class="shop-item" id="shop_box_${item.id}">
+                    <div class="item-photo">${item.photo}</div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-desc">${item.desc}</div>
+                    <div class="item-price">${item.price} ₺</div>
+                    <div style="margin-top:auto; width:100%;">
+                        <button id="shop_btn_${item.id}" class="btn" style="width:100%; padding:10px;" onclick="handleShopClick('${item.id}')"></button>
+                    </div>
+                </div>`;
+            });
+            grid.innerHTML = html; isShopBuilt = true;
+        }
+
+        // ==========================================
+        // MAĞAZA TIKLAMA İŞLEVİ (EKSİK OLAN YER DÜZELTİLDİ!)
+        // ==========================================
+        function handleShopClick(id) {
+            let item = allItems.find(i => i.id === id);
+            let isOwned = playerData.purchasedItems.includes(id);
+
+            if(!isOwned) {
+                // SATIN ALMA İŞLEMİ
+                if(playerData.money >= item.price) {
+                    playerData.money -= item.price;
+                    playerData.purchasedItems.push(id);
+                    equipItem(id, item.type);
+                } else {
+                    alert("Yetersiz Bakiye! Daha fazla maç kazanmalısın.");
+                }
+            } else {
+                // KULLANMA İŞLEMİ
+                equipItem(id, item.type);
+            }
+        }
+
+        function equipItem(id, type) {
+            if(type === "ball") playerData.activeBall = id;
+            if(type === "equip") playerData.activeEquip = id;
+            saveData(); 
+            updateCareerUI();
         }
 
         function updateCareerUI() {
             document.getElementById("leagueDisplay").innerText = getLeagueName(playerData.points);
             document.getElementById("pointsDisplay").innerText = playerData.points;
             document.getElementById("moneyDisplay").innerText = playerData.money;
-            document.getElementById("teamNameDisplay").innerText = playerData.teamName;
+            document.getElementById("teamNameDisplay").innerText = currentUsername;
             
-            let myStars = getPlayerStars();
-            document.getElementById("playerMenuStars").innerText = '★'.repeat(myStars) + '☆'.repeat(5-myStars);
+            let mStars = getPlayerStars(playerData.points); 
+            document.getElementById("playerMenuStars").innerText = '★'.repeat(mStars) + '☆'.repeat(5-mStars);
             
             if(document.getElementById("moneyDisplayShop")) document.getElementById("moneyDisplayShop").innerText = playerData.money;
             if(document.getElementById("pointsDisplayShop")) document.getElementById("pointsDisplayShop").innerText = playerData.points;
-            
-            const allItems = ['cl_ball', 'fire_ball', 'neon_ball', 'speed_boots', 'kickoff_master', 'captain_band'];
-            allItems.forEach(id => updateShopItemStatus(id));
+
+            allItems.forEach(item => {
+                let box = document.getElementById(`shop_box_${item.id}`); let btn = document.getElementById(`shop_btn_${item.id}`);
+                if(!box || !btn) return;
+                let isOwned = playerData.purchasedItems.includes(item.id);
+                let isEquipped = (playerData.activeBall === item.id || playerData.activeEquip === item.id);
+                
+                if(isOwned) { box.classList.add("purchased"); btn.className = "btn"; btn.innerText = isEquipped ? "Kullanılıyor" : "Kullan"; btn.disabled = isEquipped; } 
+                else { box.classList.remove("purchased"); btn.className = "btn btn-red"; btn.innerText = "Satın Al"; btn.disabled = false; }
+            });
         }
 
-        function showEditTeamNameModal(isFirst) {
-            document.getElementById("editTeamNameInput").value = isFirst ? "" : playerData.teamName;
-            document.getElementById("editTeamNameModal").style.display = "flex";
-        }
+        function showPage(pageId) { pages.forEach(p => p.classList.remove('active-page')); document.getElementById(pageId).classList.add('active-page'); updateCareerUI(); }
+        function showShop() { showPage('shopPage'); }
 
-        function saveTeamName() {
-            const val = document.getElementById("editTeamNameInput").value.trim();
-            if(val.length < 2) return alert("İsim en az 2 harf olmalı!");
-            playerData.teamName = val; document.getElementById("editTeamNameModal").style.display = "none";
-            updateCareerUI(); saveGame();
-        }
-        document.getElementById("editTeamNameIcon").addEventListener("click", () => showEditTeamNameModal(false));
-
-        // --- TURNUVA MANTIĞI ---
+        // ==========================================
+        // MAÇ ÖNCESİ AYARLAMALAR
+        // ==========================================
         let currentTournamentOpponent = null;
         function openTournamentMenu() {
-            showPage('tournamentPage');
-            const stages = ["Çeyrek Final", "Yarı Final", "Büyük Final"];
-            const requiredStars = [3, 4, 5]; 
+            showPage('tournamentPage'); let stage = playerData.tournamentStage; if(stage > 15) stage = 0;
+            document.getElementById("tourneyStageName").innerText = stage === 15 ? "16. Maç (BÜYÜK FİNAL)" : `${stage + 1}. Maç / 16`;
+            document.getElementById("tourneyPlayerName").innerText = currentUsername;
             
-            let stageIdx = playerData.tournamentStage;
-            if(stageIdx > 2) stageIdx = 0; 
-            
-            document.getElementById("tourneyStageName").innerText = stages[stageIdx];
-            document.getElementById("tourneyPlayerName").innerText = playerData.teamName;
-            
-            let possibleTeams = allTeams.filter(t => t.stars === requiredStars[stageIdx]);
-            currentTournamentOpponent = possibleTeams[Math.floor(Math.random() * possibleTeams.length)];
+            let reqStars = stage < 3 ? 1 : (stage < 7 ? 2 : (stage < 11 ? 3 : (stage < 14 ? 4 : 5)));
+            let possible = allTeams.filter(t => t.stars === reqStars);
+            currentTournamentOpponent = possible[Math.floor(Math.random() * possible.length)];
             document.getElementById("tourneyOpponentName").innerText = currentTournamentOpponent.name + " " + '★'.repeat(currentTournamentOpponent.stars);
         }
 
-        function startTournamentMatch() {
-            isTournamentMatch = true; isWatchMode = false;
-            initMatch(currentTournamentOpponent);
-        }
-
-        // --- MAÇ İZLE (SİMÜLASYON) MANTIĞI ---
-        function startWatchMode() {
-            isTournamentMatch = false; isWatchMode = true;
-            let team1 = allTeams[Math.floor(Math.random() * allTeams.length)];
-            let team2 = allTeams[Math.floor(Math.random() * allTeams.length)];
-            
-            watchModeLeftAiStars = team1.stars;
-            initMatch(team2, team1);
-        }
+        function startTournamentMatch() { isTournamentMatch = true; isWatchMode = false; isTwoPlayer = false; isOnlineMatch = false; initMatch(currentTournamentOpponent); }
+        function startWatchMode() { isTournamentMatch = false; isWatchMode = true; isTwoPlayer = false; isOnlineMatch = false; let t1 = allTeams[Math.floor(Math.random() * allTeams.length)]; let t2 = allTeams[Math.floor(Math.random() * allTeams.length)]; watchModeLeftStars = t1.stars; initMatch(t2, t1); }
+        function startSinglePlayer() { isTournamentMatch = false; isWatchMode = false; isTwoPlayer = false; isOnlineMatch = false; initMatch(allTeams[Math.floor(Math.random() * allTeams.length)]); }
+        function startTwoPlayer() { isTournamentMatch = false; isWatchMode = false; isTwoPlayer = true; isOnlineMatch = false; initMatch(allTeams[Math.floor(Math.random() * allTeams.length)]); }
         
-        function quitWatchMode() {
-            isGameRunning = false; clearInterval(gameInterval); clearInterval(timerInterval);
-            goToMainMenu();
+        function startOnlineMatch(hostRole) {
+            isTournamentMatch = false; isWatchMode = false; isTwoPlayer = false; isOnlineMatch = true; isHost = hostRole;
+            initMatch({name: opponentNameStr, stars: getPlayerStars(playerData.points)}); // Online rakip objesi
         }
-
-        // --- GENEL MAÇ BAŞLATMA ---
-        document.getElementById("startMatchBtn").addEventListener("click", () => {
-            isTournamentMatch = false; isWatchMode = false;
-            const randomOpponent = allTeams[Math.floor(Math.random() * allTeams.length)];
-            initMatch(randomOpponent);
-        });
 
         function initMatch(opponentObj, customLeftTeam = null) {
-            currentAiStars = opponentObj.stars;
-            showPage('gamePage');
+            currentAiStars = opponentObj.stars; showPage('gamePage');
             
-            playerScore = (!isWatchMode && playerData.purchasedItems.includes('kickoff_master')) ? 1 : 0;
-            aiScore = 0; updateScores();
-            timeLeft = 120; document.getElementById("gameTimer").innerText = "2:00";
+            p1.h = 100; p1.speed = 8; p1.y = 200; p1.x = 20;
+            p2.h = 100; p2.speed = 3.5 + (currentAiStars * 0.5); p2.diff = 0.02 + (currentAiStars * 0.015); p2.err = Math.max(0.05, 0.6 - (currentAiStars * 0.1)); p2.y = 200; p2.x = 765;
             
-            let leftStars = isWatchMode ? customLeftTeam.stars : getPlayerStars();
-            let leftName = isWatchMode ? customLeftTeam.name : playerData.teamName;
+            activeMods = { moneyM: 1, ptsM: 1, protect: false }; score1 = 0; score2 = 0; ballTrail = [];
+            
+            // EŞYA ETKİLERİ (Sadece normal tek oyunculu modda geçerli, P2P'de eşitlik için kapalıdır)
+            if(!isWatchMode && !isTwoPlayer && !isOnlineMatch && playerData.activeEquip) {
+                let eq = allItems.find(i => i.id === playerData.activeEquip);
+                if(eq) {
+                    if(eq.effect === "p_speed") p1.speed += eq.val;
+                    if(eq.effect === "p_size") p1.h += eq.val;
+                    if(eq.effect === "money_m") activeMods.moneyM = eq.val;
+                    if(eq.effect === "pts_m") activeMods.ptsM = eq.val;
+                    if(eq.effect === "ai_slow") p2.speed *= eq.val;
+                    if(eq.effect === "ai_err") p2.err += eq.val;
+                    if(eq.effect === "protect" || eq.effect === "protect_size") activeMods.protect = true;
+                    if(eq.effect === "combo") { activeMods.moneyM *= 1.5; activeMods.ptsM *= 1.5; }
+                }
+            }
+
+            let bItem = allItems.find(i => i.id === playerData.activeBall);
+            ball.effect = bItem ? bItem.effect : "none";
+            
+            if(!isWatchMode && !isTwoPlayer && !isOnlineMatch) {
+                if(ball.effect === "magic") score1 = 1;
+                if(ball.effect === "gold") activeMods.moneyM *= 2;
+                if(ball.effect === "poison") p2.err += 0.2;
+                if(ball.effect === "ice") p2.speed *= 0.7;
+            }
+
+            if(isTwoPlayer || isOnlineMatch) p2.speed = p1.speed; // Eşit hız
+
+            document.getElementById("playerScoreBoard").innerText = score1;
+            document.getElementById("aiScoreBoard").innerText = score2;
+            
+            let leftName = isTwoPlayer ? "P1 (W/S)" : (isWatchMode ? customLeftTeam.name : currentUsername);
+            let rightName = isTwoPlayer ? "P2 (Oklar)" : opponentObj.name;
+            
+            if(isOnlineMatch) {
+                leftName = isHost ? currentUsername : opponentNameStr;
+                rightName = isHost ? opponentNameStr : currentUsername;
+            }
+
+            let leftStars = isWatchMode ? customLeftTeam.stars : getPlayerStars(playerData.points);
+            let rightStars = currentAiStars;
 
             document.getElementById("playerTeamNameBoard").innerHTML = `${leftName} <span class="ai-stars">${'★'.repeat(leftStars)}</span>`;
-            document.getElementById("aiTeamNameBoard").innerHTML = `${opponentObj.name} <span class="ai-stars">${'★'.repeat(currentAiStars)}</span>`;
+            document.getElementById("aiTeamNameBoard").innerHTML = `${rightName} <span class="ai-stars">${'★'.repeat(rightStars)}</span>`;
 
             document.getElementById("watchModeBadge").style.display = isWatchMode ? "block" : "none";
-            document.getElementById("gameControlsText").style.display = isWatchMode ? "none" : "block";
-            document.getElementById("quitMatchBtn").style.display = isWatchMode ? "inline-block" : "none";
-            player.color = isWatchMode ? "#9b59b6" : "#4facfe"; 
+            document.getElementById("twoPlayerBadge").style.display = isTwoPlayer ? "block" : "none";
+            document.getElementById("onlineModeBadge").style.display = isOnlineMatch ? "block" : "none";
+            
+            p1.color = isWatchMode ? "#9b59b6" : "var(--blue-team)";
+            if(isOnlineMatch && !isHost) {
+                p1.color = "var(--red-team)"; p2.color = "var(--blue-team)";
+            } else {
+                p1.color = "var(--blue-team)"; p2.color = "var(--red-team)";
+            }
 
-            ball.type = isWatchMode ? 'default' : playerData.activeBall;
-            player.speed = (!isWatchMode && playerData.purchasedItems.includes('speed_boots')) ? 10 : 8;
-
-            ai.difficultyFactor = 0.02 + (currentAiStars * 0.015);
-            ai.speed = 3.5 + (currentAiStars * 0.5);
-            ai.errorFactor = Math.max(0.05, 0.6 - (currentAiStars * 0.1)); 
-
-            resetBall();
-            isGameRunning = true;
-            startGameLoops();
+            resetBall(); 
+            isGameRunning = true; timeLeft = 120;
+            document.getElementById("gameTimer").innerText = "2:00";
+            
+            clearInterval(timerInterval); cancelAnimationFrame(gameAnimationId);
+            
+            if(!isOnlineMatch || isHost) {
+                timerInterval = setInterval(() => { 
+                    if(!isGameRunning) return; 
+                    timeLeft--; 
+                    let m = Math.floor(timeLeft/60); let s = timeLeft%60; 
+                    let tStr = `${m}:${s<10?'0':''}${s}`;
+                    document.getElementById("gameTimer").innerText = tStr; 
+                    if(timeLeft <= 0) finishMatch(); 
+                }, 1000);
+            }
+            
+            gameLoop();
         }
 
         function resetBall() {
-            ball.x = 400; ball.y = 250;
-            const angle = (Math.random() - 0.5) * Math.PI / 3;
-            const dirX = Math.random() < 0.5 ? -1 : 1;
-            ball.speed = 7;
-            ball.velocityX = dirX * ball.speed * Math.cos(angle);
-            ball.velocityY = ball.speed * Math.sin(angle);
+            ball.x = 400; ball.y = 250; ballTrail = [];
+            let bItem = allItems.find(i => i.id === playerData.activeBall);
+            ball.speed = (bItem && !isOnlineMatch) ? bItem.speed : 7; 
+            const angle = (Math.random() - 0.5) * Math.PI / 3; const dirX = Math.random() < 0.5 ? -1 : 1;
+            ball.vx = dirX * ball.speed * Math.cos(angle); ball.vy = ball.speed * Math.sin(angle);
         }
 
-        function startGameLoops() {
-            gameInterval = setInterval(() => { if(!isGameRunning) return; updateLogic(); drawGame(); }, 1000 / 60);
-            timerInterval = setInterval(() => {
-                if(!isGameRunning) return; timeLeft--;
-                let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
-                document.getElementById("gameTimer").innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                if(timeLeft <= 0) endMatch();
-            }, 1000);
-        }
-
-        function updateScores() {
-            document.getElementById("playerScoreBoard").innerText = playerScore;
-            document.getElementById("aiScoreBoard").innerText = aiScore;
-        }
-
-        function updateLogic() {
+        // ==========================================
+        // OYUN İÇİ FİZİK
+        // ==========================================
+        function update() {
             if(isWatchMode) {
-                let leftDiff = 0.02 + (watchModeLeftAiStars * 0.015);
-                let leftSpeed = 3.5 + (watchModeLeftAiStars * 0.5);
-                let leftError = Math.max(0.05, 0.6 - (watchModeLeftAiStars * 0.1));
-                
-                let aiTargetY = ball.y - player.height / 2;
-                if(Math.random() < leftError) { aiTargetY += (Math.random() - 0.5) * (player.height * 1.5); }
-                
-                let moveDist = (aiTargetY - player.y) * leftDiff;
-                if(moveDist > leftSpeed) moveDist = leftSpeed;
-                if(moveDist < -leftSpeed) moveDist = -leftSpeed;
-                
-                player.y += moveDist;
+                let lDiff = 0.02 + (watchModeLeftStars * 0.015); let lSpeed = 3.5 + (watchModeLeftStars * 0.5);
+                let target = ball.y - p1.h/2; if(Math.random() < 0.1) target += (Math.random()-0.5)*100;
+                let dist = (target - p1.y) * lDiff; if(dist>lSpeed) dist=lSpeed; if(dist<-lSpeed) dist=-lSpeed; p1.y += dist;
+            } else if(isOnlineMatch) {
+                // ONLINE P2P KONTROLLERİ
+                if(isHost) {
+                    // Host p1'i kontrol eder
+                    if((keys["w"] || keys["W"]) && p1.y > 0) p1.y -= p1.speed;
+                    if((keys["s"] || keys["S"]) && p1.y < canvas.height - p1.h) p1.y += p1.speed;
+                } else {
+                    // Client kendi ekranında raketini (p2) kontrol edip Host'a gönderir
+                    if((keys["w"] || keys["W"]) && p2.y > 0) p2.y -= p2.speed;
+                    if((keys["s"] || keys["S"]) && p2.y < canvas.height - p2.h) p2.y += p2.speed;
+                    if(p2pConnection) p2pConnection.send({ type: 'client_input', p2y: p2.y });
+                }
             } else {
-                if(upPressed && player.y > 0) player.y -= player.speed;
-                if(downPressed && player.y < canvas.height - player.height) player.y += player.speed;
+                if((keys["w"] || keys["W"] || (!isTwoPlayer && keys["ArrowUp"])) && p1.y > 0) p1.y -= p1.speed;
+                if((keys["s"] || keys["S"] || (!isTwoPlayer && keys["ArrowDown"])) && p1.y < canvas.height - p1.h) p1.y += p1.speed;
             }
 
-            if(player.y < 0) player.y = 0; if(player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+            if(isTwoPlayer) {
+                if(keys["ArrowUp"] && p2.y > 0) p2.y -= p2.speed;
+                if(keys["ArrowDown"] && p2.y < canvas.height - p2.h) p2.y += p2.speed;
+            } else if (!isWatchMode && !isOnlineMatch) {
+                let target = ball.y - p2.h/2; if(Math.random() < p2.err) target += (Math.random()-0.5)*(p2.h*1.5);
+                let dist = (target - p2.y) * p2.diff; if(dist>p2.speed) dist=p2.speed; if(dist<-p2.speed) dist=-p2.speed; p2.y += dist;
+            }
 
-            let aiTargetY = ball.y - ai.height / 2;
-            if(Math.random() < ai.errorFactor) { aiTargetY += (Math.random() - 0.5) * (ai.height * 1.5); }
-            
-            let moveDist = (aiTargetY - ai.y) * ai.difficultyFactor;
-            if(moveDist > ai.speed) moveDist = ai.speed;
-            if(moveDist < -ai.speed) moveDist = -ai.speed;
-            
-            ai.y += moveDist;
-            
-            if(ai.y < 0) ai.y = 0; if(ai.y + ai.height > canvas.height) ai.y = canvas.height - ai.height;
+            if(p1.y<0) p1.y=0; if(p1.y+p1.h>canvas.height) p1.y=canvas.height-p1.h;
+            if(p2.y<0) p2.y=0; if(p2.y+p2.h>canvas.height) p2.y=canvas.height-p2.h;
 
-            ball.x += ball.velocityX; ball.y += ball.velocityY;
-
-            if(ball.y + ball.radius > canvas.height) { ball.y = canvas.height - ball.radius; ball.velocityY = -Math.abs(ball.velocityY); } 
-            else if(ball.y - ball.radius < 0) { ball.y = ball.radius; ball.velocityY = Math.abs(ball.velocityY); }
-
-            if(ball.x - ball.radius < 0) { aiScore++; updateScores(); resetBall(); } 
-            else if(ball.x + ball.radius > canvas.width) { playerScore++; updateScores(); resetBall(); }
-
-            let colEnt = (ball.x < canvas.width / 2) ? player : ai;
-            
-            if(ball.x - ball.radius < colEnt.x + colEnt.width && ball.x + ball.radius > colEnt.x &&
-               ball.y + ball.radius > colEnt.y && ball.y - ball.radius < colEnt.y + colEnt.height) {
+            // SADECE HOST VEYA OFFLINE İSE TOP FİZİĞİ HESAPLANIR
+            if(!isOnlineMatch || isHost) {
+                ball.x += ball.vx; ball.y += ball.vy;
                 
-                if(colEnt === player && ball.velocityX < 0 && ball.x > player.x + (player.width / 2)) {
-                    ball.x = player.x + player.width + ball.radius;
-                    let cPoint = (ball.y - (player.y + player.height / 2)) / (player.height / 2);
-                    let angle = cPoint * (Math.PI / 4);
-                    ball.velocityX = ball.speed * Math.cos(angle); ball.velocityY = ball.speed * Math.sin(angle);
-                    ball.speed += 0.4;
-                } 
-                else if(colEnt === ai && ball.velocityX > 0 && ball.x < ai.x + (ai.width / 2)) {
-                    ball.x = ai.x - ball.radius;
-                    let cPoint = (ball.y - (ai.y + ai.height / 2)) / (ai.height / 2);
-                    let angle = cPoint * (Math.PI / 4);
-                    ball.velocityX = -1 * ball.speed * Math.cos(angle); ball.velocityY = ball.speed * Math.sin(angle);
-                    ball.speed += 0.4;
+                if(ball.effect === 'fire' && Math.abs(ball.vx) > 8.5) { ballTrail.push({x: ball.x, y: ball.y}); if(ballTrail.length > 10) ballTrail.shift(); } 
+                else { if(ballTrail.length > 0) ballTrail.shift(); }
+
+                if(ball.y+ball.r > canvas.height) { ball.y = canvas.height-ball.r; ball.vy *= -1; }
+                else if(ball.y-ball.r < 0) { ball.y = ball.r; ball.vy *= -1; }
+
+                if(ball.x - ball.r < 0) { score2++; document.getElementById("aiScoreBoard").innerText = score2; resetBall(); }
+                else if(ball.x + ball.r > canvas.width) { score1++; document.getElementById("playerScoreBoard").innerText = score1; resetBall(); }
+
+                let colEnt = ball.x < canvas.width/2 ? p1 : p2;
+                if(ball.x-ball.r < colEnt.x+colEnt.w && ball.x+ball.r > colEnt.x && ball.y+ball.r > colEnt.y && ball.y-ball.r < colEnt.y+colEnt.h) {
+                    if((colEnt===p1 && ball.vx<0) || (colEnt===p2 && ball.vx>0)) {
+                        ball.x = colEnt===p1 ? colEnt.x+colEnt.w+ball.r : colEnt.x-ball.r;
+                        let c = (ball.y - (colEnt.y+colEnt.h/2)) / (colEnt.h/2);
+                        let angle = c * (Math.PI/4); let dir = colEnt===p1 ? 1 : -1;
+                        ball.vx = dir * ball.speed * Math.cos(angle); ball.vy = ball.speed * Math.sin(angle);
+                        ball.speed += 0.5;
+                    }
+                }
+                
+                // HOST İSE VERİLERİ CLIENT'A GÖNDER
+                if(isOnlineMatch && isHost && p2pConnection) {
+                    let m = Math.floor(timeLeft/60); let s = timeLeft%60; let tStr = `${m}:${s<10?'0':''}${s}`;
+                    p2pConnection.send({
+                        type: 'game_state', bx: ball.x, by: ball.y, p1y: p1.y,
+                        s1: score1, s2: score2, t: timeLeft, tStr: tStr, gameEnded: !isGameRunning
+                    });
                 }
             }
         }
 
-        function drawGame() {
+        function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = "rgba(255, 255, 255, 0.4)"; ctx.lineWidth = 4;
             ctx.beginPath(); ctx.moveTo(400, 0); ctx.lineTo(400, 500); ctx.stroke();
             ctx.beginPath(); ctx.arc(400, 250, 60, 0, Math.PI * 2); ctx.stroke();
             ctx.strokeRect(-10, 150, 120, 200); ctx.strokeRect(690, 150, 120, 200); 
 
-            ctx.fillStyle = player.color; ctx.shadowColor = player.color; ctx.shadowBlur = 15;
-            ctx.fillRect(player.x, player.y, player.width, player.height); ctx.shadowBlur = 0;
-            ctx.fillStyle = ai.color; ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
+            ctx.fillStyle = p1.color; ctx.shadowColor = p1.color; ctx.shadowBlur = 15; ctx.fillRect(p1.x, p1.y, p1.w, p1.h); ctx.shadowBlur = 0;
+            ctx.fillStyle = p2.color; ctx.shadowColor = p2.color; ctx.shadowBlur = 15; ctx.fillRect(p2.x, p2.y, p2.w, p2.h); ctx.shadowBlur = 0;
 
-            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.closePath();
+            if(ball.effect === 'fire') {
+                for(let i=0; i<ballTrail.length; i++) {
+                    let pt = ballTrail[i]; let ratio = i / ballTrail.length;
+                    ctx.fillStyle = `rgba(255, 69, 0, ${ratio})`; 
+                    ctx.beginPath(); ctx.arc(pt.x, pt.y, ball.r * ratio, 0, Math.PI*2); ctx.fill();
+                }
+            }
+
+            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2); ctx.closePath();
             
-            if(ball.type === 'cl_ball') {
-                ctx.fillStyle = "#fff"; ctx.fill(); ctx.shadowColor = "#ffd700"; ctx.shadowBlur = 20;
-                ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius - 5, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-            } else if(ball.type === 'fire_ball') {
-                ctx.fillStyle = "#ffeb3b"; ctx.fill(); ctx.shadowColor = "#ff5722"; ctx.shadowBlur = 25;
-                ctx.fillStyle = "#f44336"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius - 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-            } else if(ball.type === 'neon_ball') {
-                ctx.fillStyle = "#ccff00"; ctx.fill(); ctx.shadowColor = "#ccff00"; ctx.shadowBlur = 20; ctx.shadowBlur = 0;
+            if(ball.effect === 'fire' && !isOnlineMatch) { ctx.fillStyle = "#ffeb3b"; ctx.fill(); ctx.shadowColor = "#ff5722"; ctx.shadowBlur = 25; ctx.fillStyle = "#f44336"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r - 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; } 
+            else if(ball.effect === 'ice' && !isOnlineMatch) { ctx.fillStyle = "#e0f7fa"; ctx.fill(); ctx.shadowColor = "#00bcd4"; ctx.shadowBlur = 25; ctx.fillStyle = "#80deea"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r - 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; } 
+            else if(ball.effect === 'lightning' && !isOnlineMatch) { ctx.fillStyle = "#ff0"; ctx.fill(); ctx.shadowColor = "#ff0"; ctx.shadowBlur = 25; ctx.shadowBlur = 0; } 
+            else { ctx.fillStyle = "#fff"; ctx.fill(); ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r - 4, 0, Math.PI * 2); ctx.fill(); }
+        }
+
+        function gameLoop() { if (!isGameRunning) return; update(); draw(); gameAnimationId = requestAnimationFrame(gameLoop); }
+
+        function forceQuitMatch() {
+            isGameRunning = false; clearInterval(timerInterval); cancelAnimationFrame(gameAnimationId);
+            isOnlineMatch = false; p2pConnection = null;
+            goToMainMenu();
+        }
+
+        function finishMatchOnlineHostEnded(finalScore1, finalScore2) {
+            isGameRunning = false; clearInterval(timerInterval); cancelAnimationFrame(gameAnimationId);
+            // Client (İsteği kabul eden) p2'dir (Sağ taraf)
+            let myScore = finalScore2; let enemyScore = finalScore1;
+            processMatchEndUI(myScore, enemyScore, "Online Maç Bitti! 🌐", 30, 10);
+        }
+
+        function finishMatch() {
+            isGameRunning = false; clearInterval(timerInterval); cancelAnimationFrame(gameAnimationId);
+            let result = ""; let title = ""; let money = 0; let pts = 0;
+
+            if(isOnlineMatch && isHost) {
+                // Host p1'dir (Sol taraf)
+                let myScore = score1; let enemyScore = score2;
+                processMatchEndUI(myScore, enemyScore, "Online Maç Bitti! 🌐", 30, 10);
+            }
+            else if(isWatchMode || isTwoPlayer) {
+                title = isTwoPlayer ? "Dostluk Maçı Bitti! 👥" : "Maç Sona Erdi 📺"; 
+                document.getElementById("matchEndTitle").style.color = "var(--purple)";
+                money = 20; result = `Skor: <b>${score1} - ${score2}</b> <br><br> Eğlence modunda oynadığın için teselli geliri kazandın! <br> Gelir: <b>+20 ₺</b>`;
+                playerData.money += money; showMatchEndModal(title, result);
             } else {
-                ctx.fillStyle = "#fff"; ctx.fill();
-                ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius - 4, 0, Math.PI * 2); ctx.fill();
+                if(score1 > score2) {
+                    title = "KAZANDIN! 🎉"; document.getElementById("matchEndTitle").style.color = "#4facfe";
+                    money = Math.floor((30 + (currentAiStars * 20)) * activeMods.moneyM); pts = Math.floor((15 + (currentAiStars * 5)) * activeMods.ptsM); 
+                    if(isTournamentMatch) {
+                        playerData.tournamentStage++;
+                        if(playerData.tournamentStage > 15) {
+                            title = "🏆 ŞAMPİYON! 🏆"; document.getElementById("matchEndTitle").style.color = "var(--gold)";
+                            money += 5000; pts += 1000; playerData.tournamentStage = 0; 
+                            result = `Skor: <b>${score1} - ${score2}</b> <br><br> Turnuva Ödülü: <b>+${money} ₺</b> <br> Lig Puanı: <b>+${pts}</b>`;
+                        } else { result = `Skor: <b>${score1} - ${score2}</b> <br> Gelir: <b>+${money} ₺</b> <br> Lig Puanı: <b>+${pts}</b>`; }
+                    } else { result = `Skor: <b>${score1} - ${score2}</b> <br><br> Gelir: <b>+${money} ₺</b> <br> Puan: <b>+${pts}</b>`; }
+                } else if (score1 < score2) {
+                    title = "KAYBETTİN 😔"; document.getElementById("matchEndTitle").style.color = "#ff0844"; money = 5; pts = -15 + currentAiStars; if(activeMods.protect) pts = 0;
+                    if(isTournamentMatch) { playerData.tournamentStage = 0; title = "ELENDİN ❌"; result = `Serüven bitti.<br> Teselli: <b>+${money} ₺</b>`; } 
+                    else { let prt = activeMods.protect ? " (Korumalı)" : ""; result = `Skor: <b>${score1} - ${score2}</b> <br> Gelir: <b>+${money} ₺</b> <br> Puan: <b>${pts}</b>${prt}`; }
+                } else {
+                    title = "BERABERE 🤝"; document.getElementById("matchEndTitle").style.color = "#fff"; money = 10; pts = 3;
+                    result = `Skor: <b>${score1} - ${score2}</b> <br> Gelir: <b>+${money} ₺</b> <br> Puan: <b>+${pts}</b>`;
+                }
+                playerData.money += money; playerData.points += pts; if(playerData.points < 0) playerData.points = 0;
+                showMatchEndModal(title, result);
             }
         }
 
-        function endMatch() {
-            isGameRunning = false; clearInterval(gameInterval); clearInterval(timerInterval);
-            let result = "", title = "", money = 0, pts = 0;
-            
-            if(isWatchMode) {
-                title = "Maç Sona Erdi 📺"; document.getElementById("matchEndTitle").style.color = "var(--purple)";
-                money = 20;
-                result = `Skor: <b>${playerScore} - ${aiScore}</b> <br><br> Maçı sonuna kadar izlediğin için Yayın Geliri kazandın! <br> Gelir: <b>+20 ₺</b>`;
-                playerData.money += money;
-            } 
-            else {
-                let diffMultiplier = currentAiStars; 
-
-                if(playerScore > aiScore) {
-                    title = "KAZANDIN! 🎉"; document.getElementById("matchEndTitle").style.color = "#4facfe";
-                    money = 15 + (diffMultiplier * 5); pts = 10 + (diffMultiplier * 3); 
-                    
-                    if(isTournamentMatch) {
-                        playerData.tournamentStage++;
-                        if(playerData.tournamentStage > 2) {
-                            title = "🏆 ŞAMPİYON OLDUN! 🏆"; document.getElementById("matchEndTitle").style.color = "var(--gold)";
-                            money += 500; pts += 50;
-                            playerData.tournamentStage = 0; 
-                            result = `Skor: <b>${playerScore} - ${aiScore}</b> <br><br> <b>KUPA SENİN!</b> <br> Turnuva Ödülü: <b>+${money} ₺</b> <br> Lig Puanı: <b>+${pts}</b>`;
-                        } else {
-                            result = `Skor: <b>${playerScore} - ${aiScore}</b> <br><br> <b>Tebrikler, bir üst tura geçtin!</b> <br> Gelir: <b>+${money} ₺</b> <br> Lig Puanı: <b>+${pts}</b>`;
-                        }
-                    } else {
-                        result = `Skor: <b>${playerScore} - ${aiScore}</b> <br><br> Gelir: <b>+${money} ₺</b> <br> Lig Puanı: <b>+${pts}</b>`;
-                    }
-                } else if (playerScore < aiScore) {
-                    title = "KAYBETTİN 😔"; document.getElementById("matchEndTitle").style.color = "#ff0844";
-                    money = 2; pts = -15 + diffMultiplier; 
-                    
-                    if(playerData.purchasedItems.includes('captain_band')) pts = 0;
-                    
-                    if(isTournamentMatch) {
-                        playerData.tournamentStage = 0; 
-                        title = "ELENDİN ❌";
-                        result = `Skor: <b>${playerScore} - ${aiScore}</b> <br><br> Turnuvaya veda ettin. <br> Teselli Ödülü: <b>+${money} ₺</b>`;
-                    } else {
-                        let pazubent = (playerData.purchasedItems.includes('captain_band')) ? " (Pazubent Korudu!)" : "";
-                        result = `Skor: <b>${playerScore} - ${aiScore}</b> <br><br> Gelir: <b>+${money} ₺</b> <br> Lig Puanı: <b>${pts}</b>${pazubent}`;
-                    }
-                } else {
-                    title = "BERABERE 🤝"; document.getElementById("matchEndTitle").style.color = "#fff";
-                    money = 5; pts = 3;
-                    if(isTournamentMatch) {
-                        result = `Skor: <b>${playerScore} - ${aiScore}</b> <br><br> Turnuvada berabere kaldın. Maçı tekrar etmelisin! <br> Gelir: <b>+${money} ₺</b>`;
-                    } else {
-                        result = `Skor: <b>${playerScore} - ${aiScore}</b> <br><br> Gelir: <b>+${money} ₺</b> <br> Lig Puanı: <b>+${pts}</b>`;
-                    }
-                }
-                
-                playerData.money += money; playerData.points += pts;
-                if(playerData.points < 0) playerData.points = 0;
+        function processMatchEndUI(myScore, enemyScore, title, baseMoney, basePts) {
+            let result = "";
+            if(myScore > enemyScore) {
+                document.getElementById("matchEndTitle").style.color = "#4facfe";
+                playerData.money += baseMoney * 2; playerData.points += basePts;
+                result = `Skor: <b>${myScore} - ${enemyScore}</b> <br><br> Harika bir zafer! <br> Gelir: <b>+${baseMoney*2} ₺</b> <br> Puan: <b>+${basePts}</b>`;
+            } else if(myScore < enemyScore) {
+                document.getElementById("matchEndTitle").style.color = "#ff0844"; title = "KAYBETTİN 😔";
+                playerData.money += 5; playerData.points -= basePts; if(playerData.points < 0) playerData.points = 0;
+                result = `Skor: <b>${myScore} - ${enemyScore}</b> <br><br> Rakip senden daha iyiydi. <br> Teselli: <b>+5 ₺</b> <br> Puan: <b>-${basePts}</b>`;
+            } else {
+                document.getElementById("matchEndTitle").style.color = "#fff"; title = "BERABERE 🤝";
+                playerData.money += baseMoney;
+                result = `Skor: <b>${myScore} - ${enemyScore}</b> <br><br> Kıyasıya mücadele! <br> Gelir: <b>+${baseMoney} ₺</b>`;
             }
+            showMatchEndModal(title, result);
+        }
 
-            updateCareerUI(); saveGame();
+        function showMatchEndModal(title, result) {
+            saveData(); updateCareerUI();
             document.getElementById("matchEndTitle").innerText = title;
             document.getElementById("matchResultModalText").innerHTML = result;
             document.getElementById("matchEndModal").style.display = "flex";
+            
+            if(isOnlineMatch && p2pConnection) { p2pConnection.close(); p2pConnection = null; isOnlineMatch = false; }
         }
 
         function goToMainMenu() { document.getElementById("matchEndModal").style.display = "none"; showPage('mainMenuPage'); }
-
-        function updateShopItemStatus(id) {
-            const el = document.getElementById(`item_${id}`); if(!el) return;
-            const bBtn = document.getElementById(`buy_${id}`); const eBtn = document.getElementById(`equip_${id}`);
-            if(playerData.purchasedItems.includes(id)) {
-                el.classList.add('purchased'); bBtn.style.display = "none"; eBtn.style.display = "block";
-                if(id.includes('_ball')) { eBtn.innerText = (playerData.activeBall === id) ? "Kullanılıyor" : "Kullan"; eBtn.disabled = (playerData.activeBall === id); }
-            } else { el.classList.remove('purchased'); bBtn.style.display = "block"; eBtn.style.display = "none"; }
-        }
-
-        function buyItem(id, price) {
-            if(playerData.money >= price) { playerData.money -= price; playerData.purchasedItems.push(id); updateCareerUI(); saveGame(); } 
-            else { alert("Yetersiz bakiye! ⚽"); }
-        }
-        function equipItem(id) { if(id.includes('_ball')) playerData.activeBall = id; updateCareerUI(); saveGame(); }
-
-        loadGame();
+        window.onload = initSystem;
     </script>
 </body>
 </html>
