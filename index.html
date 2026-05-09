@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Futbol JS - Online P2P Sürüm</title>
+    <title>Pro Futbol JS - Online P2P Ayna Sürümü</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         /* ==============================
@@ -226,7 +226,7 @@
             <div id="twoPlayerBadge" class="mode-badge">👥 2 KİŞİLİK MOD (Sol: W/S | Sağ: Ok Tuşları)</div>
             <div id="onlineModeBadge" class="mode-badge">🌐 ONLINE P2P (Kontrol: W/S)</div>
         </div>
-        </div>
+    </div>
 
     <div id="matchEndModal" class="modal-overlay">
         <div class="modal">
@@ -306,7 +306,7 @@
         // 3. KAYIT VE LOKAL VERİ
         // ==========================================
         let currentUsername = "";
-        let playerData = { money: 500, points: 1000, activeBall: 'ball_1', activeEquip: null, purchasedItems: ['ball_1'], savedPeers: [], tournamentStage: 0 };
+        let playerData = { money: 500, points: 1000, activeBall: 'ball_1', activeEquip: null, purchasedItems: ['ball_1'], savedPeers: [], tournamentStage: 0, myPeerId: null };
 
         function loadData() {
             let data = localStorage.getItem("proFutbol_SaveData");
@@ -323,7 +323,7 @@
         }
 
         // ==========================================
-        // 4. PEERJS İLE GERÇEK ZAMANLI P2P SİSTEMİ
+        // 4. PEERJS İLE GERÇEK ZAMANLI P2P (AYNA SİSTEMİ)
         // ==========================================
         let peer = null;
         let myPeerId = null;
@@ -331,6 +331,7 @@
         let isOnlineMatch = false;
         let isHost = false; 
         let opponentNameStr = "Rakip";
+        let opponentStars = 1;
 
         function initSystem() {
             loadData();
@@ -355,10 +356,14 @@
         }
 
         function initPeerJS() {
-            // Rastgele karışık bir ID yerine, kullanıcı adına benzeyen ama benzersiz bir ID oluşturmayı deneyelim
-            let randomNum = Math.floor(Math.random() * 9000) + 1000;
-            let cleanName = currentUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            let desiredId = `${cleanName}-${randomNum}`;
+            let desiredId = playerData.myPeerId;
+            if(!desiredId) {
+                let randomNum = Math.floor(Math.random() * 9000) + 1000;
+                let cleanName = currentUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                desiredId = `${cleanName}-${randomNum}`;
+                playerData.myPeerId = desiredId;
+                saveData(); 
+            }
 
             peer = new Peer(desiredId);
 
@@ -368,11 +373,11 @@
             });
 
             peer.on('connection', function(conn) {
-                // Biri bize bağlandı (İstek attı)
                 conn.on('data', function(data) {
                     if(data.type === 'match_request') {
                         p2pConnection = conn;
                         opponentNameStr = data.name;
+                        opponentStars = data.stars;
                         document.getElementById("p2pRequestText").innerText = `${data.name} seni online maça davet ediyor!`;
                         document.getElementById("p2pRequestModal").style.display = "flex";
                     }
@@ -382,25 +387,26 @@
                     }
                     else if(data.type === 'match_accept') {
                         document.getElementById("p2pWaitModal").style.display = "none";
-                        startOnlineMatch(true); // İsteği biz attık, kabul edildi -> BİZ HOST'UZ
+                        opponentNameStr = data.name;
+                        opponentStars = data.stars;
+                        startOnlineMatch(true); // İsteği atan (Host)
                     }
                     else if(data.type === 'game_state' && isOnlineMatch && !isHost) {
-                        // Hosttan gelen oyun verileri
-                        ball.x = data.bx; ball.y = data.by;
-                        p1.y = data.p1y; score1 = data.s1; score2 = data.s2;
+                        // AYNA SİSTEMİ (Hostun gönderdikleri ekrana ters basılır)
+                        ball.x = 800 - data.bx; // Top x düzleminde yansıdı!
+                        ball.y = data.by;
+                        p2.y = data.p1y; // Hostun sol raketi, client'ın sağında!
+                        score1 = data.s2; // Benim skorum (hostun sağında olan)
+                        score2 = data.s1; // Hostun skoru (hostun solunda olan)
+                        ball.speed = data.spd;
                         timeLeft = data.t;
                         document.getElementById("gameTimer").innerText = data.tStr;
                         document.getElementById("playerScoreBoard").innerText = score1;
                         document.getElementById("aiScoreBoard").innerText = score2;
-                        if(data.gameEnded) { finishMatchOnlineHostEnded(data.s1, data.s2); }
+                        if(data.gameEnded) { finishMatchOnlineHostEnded(score1, score2); }
                     }
                     else if(data.type === 'client_input' && isOnlineMatch && isHost) {
-                        // Clienttan (Rakip) gelen raket hareketi
-                        p2.y = data.p2y;
-                    }
-                    else if(data.type === 'player_quit') {
-                        alert("Rakip oyundan çıktı/bağlantısı koptu!");
-                        forceQuitMatch();
+                        p2.y = data.p1y; // Client'ın yolladığı kendi(sol) raketi, host'un sağına yansır!
                     }
                 });
             });
@@ -411,7 +417,6 @@
             });
         }
 
-        // Maç İsteği Gönderme
         function sendMatchRequest() {
             let targetId = document.getElementById("friendPeerInput").value.trim();
             if(!targetId) return;
@@ -421,39 +426,35 @@
             p2pConnection = peer.connect(targetId);
             
             p2pConnection.on('open', function() {
-                p2pConnection.send({ type: 'match_request', name: currentUsername });
+                p2pConnection.send({ type: 'match_request', name: currentUsername, stars: getPlayerStars(playerData.points) });
                 document.getElementById("p2pStatusMsg").innerText = "";
                 document.getElementById("p2pWaitModal").style.display = "flex";
                 
-                // Arkadaş listesine ekle
                 if(!playerData.savedPeers.includes(targetId)) {
                     playerData.savedPeers.push(targetId);
                     saveData(); refreshFriendsUI();
                 }
             });
 
-            // Gelen cevapları dinleme yukarıdaki genel peer.on('connection') içinde yapılıyor 
-            // ama aktif bağlandığımız obje üzerinden de dinlemeliyiz:
             p2pConnection.on('data', function(data) {
                 if(data.type === 'match_accept') {
                     document.getElementById("p2pWaitModal").style.display = "none";
-                    opponentNameStr = "Rakip (" + targetId.split('-')[0] + ")";
-                    startOnlineMatch(true); // Host
+                    opponentNameStr = data.name;
+                    opponentStars = data.stars;
+                    startOnlineMatch(true); // İsteği atan (Host)
                 } else if(data.type === 'match_reject') {
                     alert("Maç isteği reddedildi.");
                     cancelP2PRequest();
                 } else if(data.type === 'client_input' && isOnlineMatch && isHost) {
-                    p2.y = data.p2y; // Client'ın raketini güncelle
-                } else if(data.type === 'game_state' && isOnlineMatch && !isHost) {
-                    // Bu blokta client çalışmaz ama güvenlik için kalsın
+                    p2.y = data.p1y;
                 }
             });
         }
 
         function acceptP2PMatch() {
             document.getElementById("p2pRequestModal").style.display = "none";
-            p2pConnection.send({ type: 'match_accept' });
-            startOnlineMatch(false); // İsteği kabul eden her zaman CLIENT'tır.
+            p2pConnection.send({ type: 'match_accept', name: currentUsername, stars: getPlayerStars(playerData.points) });
+            startOnlineMatch(false); // İsteği Kabul Eden (Client)
         }
 
         function rejectP2PMatch() {
@@ -482,7 +483,6 @@
                     </div>`;
             });
         }
-
 
         // ==========================================
         // OYUN MOTORU VE DEĞİŞKENLERİ
@@ -523,15 +523,11 @@
             grid.innerHTML = html; isShopBuilt = true;
         }
 
-        // ==========================================
-        // MAĞAZA TIKLAMA İŞLEVİ (EKSİK OLAN YER DÜZELTİLDİ!)
-        // ==========================================
         function handleShopClick(id) {
             let item = allItems.find(i => i.id === id);
             let isOwned = playerData.purchasedItems.includes(id);
 
             if(!isOwned) {
-                // SATIN ALMA İŞLEMİ
                 if(playerData.money >= item.price) {
                     playerData.money -= item.price;
                     playerData.purchasedItems.push(id);
@@ -540,7 +536,6 @@
                     alert("Yetersiz Bakiye! Daha fazla maç kazanmalısın.");
                 }
             } else {
-                // KULLANMA İŞLEMİ
                 equipItem(id, item.type);
             }
         }
@@ -548,8 +543,7 @@
         function equipItem(id, type) {
             if(type === "ball") playerData.activeBall = id;
             if(type === "equip") playerData.activeEquip = id;
-            saveData(); 
-            updateCareerUI();
+            saveData(); updateCareerUI();
         }
 
         function updateCareerUI() {
@@ -600,7 +594,7 @@
         
         function startOnlineMatch(hostRole) {
             isTournamentMatch = false; isWatchMode = false; isTwoPlayer = false; isOnlineMatch = true; isHost = hostRole;
-            initMatch({name: opponentNameStr, stars: getPlayerStars(playerData.points)}); // Online rakip objesi
+            initMatch({name: opponentNameStr, stars: opponentStars}); 
         }
 
         function initMatch(opponentObj, customLeftTeam = null) {
@@ -611,7 +605,6 @@
             
             activeMods = { moneyM: 1, ptsM: 1, protect: false }; score1 = 0; score2 = 0; ballTrail = [];
             
-            // EŞYA ETKİLERİ (Sadece normal tek oyunculu modda geçerli, P2P'de eşitlik için kapalıdır)
             if(!isWatchMode && !isTwoPlayer && !isOnlineMatch && playerData.activeEquip) {
                 let eq = allItems.find(i => i.id === playerData.activeEquip);
                 if(eq) {
@@ -636,7 +629,7 @@
                 if(ball.effect === "ice") p2.speed *= 0.7;
             }
 
-            if(isTwoPlayer || isOnlineMatch) p2.speed = p1.speed; // Eşit hız
+            if(isTwoPlayer || isOnlineMatch) p2.speed = p1.speed; 
 
             document.getElementById("playerScoreBoard").innerText = score1;
             document.getElementById("aiScoreBoard").innerText = score2;
@@ -644,9 +637,10 @@
             let leftName = isTwoPlayer ? "P1 (W/S)" : (isWatchMode ? customLeftTeam.name : currentUsername);
             let rightName = isTwoPlayer ? "P2 (Oklar)" : opponentObj.name;
             
+            // ONLINE P2P İÇİN HERKES KENDİNİ SOLDA (P1) GÖRECEK
             if(isOnlineMatch) {
-                leftName = isHost ? currentUsername : opponentNameStr;
-                rightName = isHost ? opponentNameStr : currentUsername;
+                leftName = currentUsername;
+                rightName = opponentNameStr;
             }
 
             let leftStars = isWatchMode ? customLeftTeam.stars : getPlayerStars(playerData.points);
@@ -660,11 +654,7 @@
             document.getElementById("onlineModeBadge").style.display = isOnlineMatch ? "block" : "none";
             
             p1.color = isWatchMode ? "#9b59b6" : "var(--blue-team)";
-            if(isOnlineMatch && !isHost) {
-                p1.color = "var(--red-team)"; p2.color = "var(--blue-team)";
-            } else {
-                p1.color = "var(--blue-team)"; p2.color = "var(--red-team)";
-            }
+            p2.color = "var(--red-team)";
 
             resetBall(); 
             isGameRunning = true; timeLeft = 120;
@@ -698,31 +688,27 @@
         // OYUN İÇİ FİZİK
         // ==========================================
         function update() {
+            // --- SOL RAKET (P1) KONTROLÜ ---
             if(isWatchMode) {
                 let lDiff = 0.02 + (watchModeLeftStars * 0.015); let lSpeed = 3.5 + (watchModeLeftStars * 0.5);
                 let target = ball.y - p1.h/2; if(Math.random() < 0.1) target += (Math.random()-0.5)*100;
                 let dist = (target - p1.y) * lDiff; if(dist>lSpeed) dist=lSpeed; if(dist<-lSpeed) dist=-lSpeed; p1.y += dist;
             } else if(isOnlineMatch) {
-                // ONLINE P2P KONTROLLERİ
-                if(isHost) {
-                    // Host p1'i kontrol eder
-                    if((keys["w"] || keys["W"]) && p1.y > 0) p1.y -= p1.speed;
-                    if((keys["s"] || keys["S"]) && p1.y < canvas.height - p1.h) p1.y += p1.speed;
-                } else {
-                    // Client kendi ekranında raketini (p2) kontrol edip Host'a gönderir
-                    if((keys["w"] || keys["W"]) && p2.y > 0) p2.y -= p2.speed;
-                    if((keys["s"] || keys["S"]) && p2.y < canvas.height - p2.h) p2.y += p2.speed;
-                    if(p2pConnection) p2pConnection.send({ type: 'client_input', p2y: p2.y });
-                }
+                // Herkes W/S ile sadece kendi sol raketini (P1) kontrol eder!
+                if((keys["w"] || keys["W"]) && p1.y > 0) p1.y -= p1.speed;
+                if((keys["s"] || keys["S"]) && p1.y < canvas.height - p1.h) p1.y += p1.speed;
+                if(!isHost && p2pConnection) { p2pConnection.send({ type: 'client_input', p1y: p1.y }); }
             } else {
                 if((keys["w"] || keys["W"] || (!isTwoPlayer && keys["ArrowUp"])) && p1.y > 0) p1.y -= p1.speed;
                 if((keys["s"] || keys["S"] || (!isTwoPlayer && keys["ArrowDown"])) && p1.y < canvas.height - p1.h) p1.y += p1.speed;
             }
 
+            // --- SAĞ RAKET (P2) KONTROLÜ ---
             if(isTwoPlayer) {
                 if(keys["ArrowUp"] && p2.y > 0) p2.y -= p2.speed;
                 if(keys["ArrowDown"] && p2.y < canvas.height - p2.h) p2.y += p2.speed;
-            } else if (!isWatchMode && !isOnlineMatch) {
+            } else if (!isOnlineMatch) {
+                // İzleme ve Tek Oyunculu yapay zeka (İkisinde de canavar gibi oynar!)
                 let target = ball.y - p2.h/2; if(Math.random() < p2.err) target += (Math.random()-0.5)*(p2.h*1.5);
                 let dist = (target - p2.y) * p2.diff; if(dist>p2.speed) dist=p2.speed; if(dist<-p2.speed) dist=-p2.speed; p2.y += dist;
             }
@@ -730,12 +716,16 @@
             if(p1.y<0) p1.y=0; if(p1.y+p1.h>canvas.height) p1.y=canvas.height-p1.h;
             if(p2.y<0) p2.y=0; if(p2.y+p2.h>canvas.height) p2.y=canvas.height-p2.h;
 
-            // SADECE HOST VEYA OFFLINE İSE TOP FİZİĞİ HESAPLANIR
             if(!isOnlineMatch || isHost) {
                 ball.x += ball.vx; ball.y += ball.vy;
                 
-                if(ball.effect === 'fire' && Math.abs(ball.vx) > 8.5) { ballTrail.push({x: ball.x, y: ball.y}); if(ballTrail.length > 10) ballTrail.shift(); } 
-                else { if(ballTrail.length > 0) ballTrail.shift(); }
+                // ALEV İZİ: TOPLAM HIZA BAKIYOR (Çapraz gitse bile sönmez!)
+                if(ball.effect === 'fire' && ball.speed >= 8) { 
+                    ballTrail.push({x: ball.x, y: ball.y}); 
+                    if(ballTrail.length > 15) ballTrail.shift(); 
+                } else { 
+                    if(ballTrail.length > 0) ballTrail.shift(); 
+                }
 
                 if(ball.y+ball.r > canvas.height) { ball.y = canvas.height-ball.r; ball.vy *= -1; }
                 else if(ball.y-ball.r < 0) { ball.y = ball.r; ball.vy *= -1; }
@@ -754,12 +744,11 @@
                     }
                 }
                 
-                // HOST İSE VERİLERİ CLIENT'A GÖNDER
                 if(isOnlineMatch && isHost && p2pConnection) {
                     let m = Math.floor(timeLeft/60); let s = timeLeft%60; let tStr = `${m}:${s<10?'0':''}${s}`;
                     p2pConnection.send({
                         type: 'game_state', bx: ball.x, by: ball.y, p1y: p1.y,
-                        s1: score1, s2: score2, t: timeLeft, tStr: tStr, gameEnded: !isGameRunning
+                        s1: score1, s2: score2, t: timeLeft, tStr: tStr, spd: ball.speed, gameEnded: !isGameRunning
                     });
                 }
             }
@@ -785,24 +774,16 @@
 
             ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2); ctx.closePath();
             
-            if(ball.effect === 'fire' && !isOnlineMatch) { ctx.fillStyle = "#ffeb3b"; ctx.fill(); ctx.shadowColor = "#ff5722"; ctx.shadowBlur = 25; ctx.fillStyle = "#f44336"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r - 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; } 
-            else if(ball.effect === 'ice' && !isOnlineMatch) { ctx.fillStyle = "#e0f7fa"; ctx.fill(); ctx.shadowColor = "#00bcd4"; ctx.shadowBlur = 25; ctx.fillStyle = "#80deea"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r - 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; } 
-            else if(ball.effect === 'lightning' && !isOnlineMatch) { ctx.fillStyle = "#ff0"; ctx.fill(); ctx.shadowColor = "#ff0"; ctx.shadowBlur = 25; ctx.shadowBlur = 0; } 
+            if(ball.effect === 'fire') { ctx.fillStyle = "#ffeb3b"; ctx.fill(); ctx.shadowColor = "#ff5722"; ctx.shadowBlur = 25; ctx.fillStyle = "#f44336"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r - 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; } 
+            else if(ball.effect === 'ice') { ctx.fillStyle = "#e0f7fa"; ctx.fill(); ctx.shadowColor = "#00bcd4"; ctx.shadowBlur = 25; ctx.fillStyle = "#80deea"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r - 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; } 
+            else if(ball.effect === 'lightning') { ctx.fillStyle = "#ff0"; ctx.fill(); ctx.shadowColor = "#ff0"; ctx.shadowBlur = 25; ctx.shadowBlur = 0; } 
             else { ctx.fillStyle = "#fff"; ctx.fill(); ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r - 4, 0, Math.PI * 2); ctx.fill(); }
         }
 
         function gameLoop() { if (!isGameRunning) return; update(); draw(); gameAnimationId = requestAnimationFrame(gameLoop); }
 
-        function forceQuitMatch() {
+        function finishMatchOnlineHostEnded(myScore, enemyScore) {
             isGameRunning = false; clearInterval(timerInterval); cancelAnimationFrame(gameAnimationId);
-            isOnlineMatch = false; p2pConnection = null;
-            goToMainMenu();
-        }
-
-        function finishMatchOnlineHostEnded(finalScore1, finalScore2) {
-            isGameRunning = false; clearInterval(timerInterval); cancelAnimationFrame(gameAnimationId);
-            // Client (İsteği kabul eden) p2'dir (Sağ taraf)
-            let myScore = finalScore2; let enemyScore = finalScore1;
             processMatchEndUI(myScore, enemyScore, "Online Maç Bitti! 🌐", 30, 10);
         }
 
@@ -811,9 +792,7 @@
             let result = ""; let title = ""; let money = 0; let pts = 0;
 
             if(isOnlineMatch && isHost) {
-                // Host p1'dir (Sol taraf)
-                let myScore = score1; let enemyScore = score2;
-                processMatchEndUI(myScore, enemyScore, "Online Maç Bitti! 🌐", 30, 10);
+                processMatchEndUI(score1, score2, "Online Maç Bitti! 🌐", 30, 10);
             }
             else if(isWatchMode || isTwoPlayer) {
                 title = isTwoPlayer ? "Dostluk Maçı Bitti! 👥" : "Maç Sona Erdi 📺"; 
